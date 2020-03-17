@@ -1,0 +1,57 @@
+version: '3.7'
+
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD=airflow
+      - MYSQL_USER=airflow
+      - MYSQL_PASSWORD=airflow
+      - MYSQL_DATABASE=airflow
+    ports:
+      - "3306:3306"
+
+  rabbitmq:
+    image: rabbitmq:3.8.0-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=airflow
+      - RABBITMQ_DEFAULT_PASS=airflow
+      - RABBITMQ_DEFAULT_VHOST=airflow
+    ports:
+      - "15672:15672"
+
+  master:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    image: puckel/docker-ha-airflow:1.10.9
+    init: true
+    hostname: master
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+    volumes:
+      - ${PWD}/airflow/airflow.cfg:/app/airflow/airflow.cfg
+    ports:
+      - "8080:8080"
+      - "2020:22"
+    command: master
+
+  worker:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    image: puckel/docker-ha-airflow:1.10.9
+    init: true
+    hostname: worker
+    depends_on:
+      - master
+    ports:
+      - "2021:22"
+    volumes:
+      - ${PWD}/airflow/airflow.cfg:/app/airflow/airflow.cfg
+    environment:
+      - AIRFLOW_ENV=test
+    command: worker
