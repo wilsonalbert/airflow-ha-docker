@@ -28,12 +28,13 @@ services:
     image: puckel/docker-ha-airflow:1.10.9
     init: true
     hostname: master
-    restart: always
     depends_on:
       - db
       - rabbitmq
     volumes:
-      - ${PWD}/airflow/airflow.cfg:/app/airflow/airflow.cfg
+      - ${PWD}/airflow/airflow.cfg:/usr/local/airflow/airflow.cfg
+      - ${PWD}/airflow/sshd_config:/etc/ssh/sshd_config
+      - ${PWD}/airflow/.ssh:/usr/local/airflow/.ssh
     ports:
       - "8080:8080"
       - "2020:22"
@@ -51,7 +52,7 @@ services:
     ports:
       - "2021:22"
     volumes:
-      - ${PWD}/airflow/airflow.cfg:/app/airflow/airflow.cfg
-    environment:
-      - AIRFLOW_ENV=test
+      - ${PWD}/airflow/airflow.cfg:/usr/local/airflow/airflow.cfg
+      - ${PWD}/airflow/sshd_config:/etc/ssh/sshd_config
+      - ${PWD}/airflow/.ssh:/usr/local/airflow/.ssh
     command: worker

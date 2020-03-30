@@ -53,7 +53,6 @@ RUN set -ex \
         netcat \
         locales \
         openssh-server \
-        openssh-clients \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -65,6 +64,7 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.2' \
+    && pip install git+git://github.com/teamclairvoyant/airflow-scheduler-failover-controller.git@v1.0.5 \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -78,17 +78,16 @@ RUN set -ex \
         /usr/share/doc-base
 
 COPY entrypoint.sh /entrypoint.sh
-COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
+#COPY airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
-RUN echo 'root' |passwd root --stdin
-COPY sshd_config /etc/ssh/sshd_config
+RUN echo 'root:root' | chpasswd
+#COPY sshd_config /etc/ssh/sshd_config
 
 EXPOSE 8080 5555 8793
 
 USER airflow
 RUN mkdir $AIRFLOW_USER_HOME/.ssh
-COPY .ssh/* $AIRFLOW_USER_HOME/.ssh
+#COPY .ssh/* $AIRFLOW_USER_HOME/.ssh
 WORKDIR ${AIRFLOW_USER_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["webserver"]
