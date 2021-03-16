@@ -32,9 +32,11 @@ services:
       - db
       - rabbitmq
     volumes:
-      - ${PWD}/airflow/airflow.cfg:/usr/local/airflow/airflow.cfg
-      - ${PWD}/airflow/sshd_config:/etc/ssh/sshd_config
-      - ${PWD}/airflow/.ssh:/usr/local/airflow/.ssh
+      - ./airflow/airflow.cfg:/usr/local/airflow/airflow.cfg
+      - type: bind
+        source: ./airflow/sshd_config
+        target: /etc/ssh/sshd_config
+      - ./airflow/.ssh:/usr/local/airflow/.ssh
     ports:
       - "8080:8080"
       - "2020:22"
